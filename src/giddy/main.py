@@ -2,7 +2,7 @@ import argparse
 import sys
 
 from giddy.cli import ask_commit_details
-from giddy.git import do_commit_and_push
+from giddy.git import do_commit_and_push, start_new_branch
 
 
 def app():
@@ -36,7 +36,7 @@ def app():
 
     elif args.command == "start":
         print(f"\n🐎 Giddy prépare la branche pour : {args.name}")
-        print("Ici, Giddy fera le git stash, checkout main, pull et checkout -b !")
+        start_new_branch(args.name)
 
 
 if __name__ == "__main__":
