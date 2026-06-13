@@ -8,16 +8,20 @@ from giddy.git import get_current_branch, get_modified_files
 
 
 def ask_commit_details() -> str:
-    """Affiche le menu interactif et retourne le message de commit formaté."""
+    """Interactively prompt for commit details using conventional commits format.
+
+    Returns:
+        A formatted commit message following conventional commits format.
+    """
 
     commit_type_full = inquirer.select(
-        message="Quel type de changement viens-tu de faire ?",
+        message="What type of change did you make?",
         choices=[
-            "feat     ✨ (Nouvelle fonctionnalité)",
-            "fix      🐛 (Correction de bug)",
-            "refactor 🔨 (Amélioration du code)",
+            "feat     ✨ (New feature)",
+            "fix      🐛 (Bug fix)",
+            "refactor 🔨 (Code improvement)",
             "docs     📚 (Documentation)",
-            "chore    🧹 (Tâches ménagères, dépendances)",
+            "chore    🧹 (Dependencies, configuration)",
         ],
         pointer="👉",
     ).execute()
@@ -25,32 +29,35 @@ def ask_commit_details() -> str:
     commit_type = commit_type_full.split()[0]
 
     scope = inquirer.text(
-        message="Sur quelle partie du projet ? (ex: api, ui - Entrée pour ignorer) :"
+        message="Which part of the project? (e.g., api, ui - leave blank to skip):"
     ).execute()
 
     description = inquirer.text(
-        message="Décris ton changement (sans majuscule à la fin) :",
-        validate=EmptyInputValidator("La description est obligatoire !"),
+        message="Describe your change (in lowercase without ending punctuation):",
+        validate=EmptyInputValidator("Description is required!"),
     ).execute()
 
-    # Formatage de la chaîne finale
+    # Format final commit message
     scope_str = f"({scope.strip()})" if scope.strip() else ""
     return f"{commit_type}{scope_str}: {description.strip()}"
 
 
-def show_dashboard():
-    """Affiche un magnifique tableau de bord de l'état actuel."""
+def show_dashboard() -> None:
+    """Display repository status dashboard.
+
+    Shows current branch, modified files, and next steps.
+    """
     console = Console()
     branch = get_current_branch()
     files = get_modified_files()
 
-    # Si tout est propre
+    # If working tree is clean
     if not files:
         message = Text(
-            "\n✨ Ton arbre de travail est impeccable sur la branche '", style="green"
+            "\n✨ Your working directory is clean on branch '", style="green"
         )
         message.append(branch, style="bold cyan")
-        message.append("'.\nRien à commiter !", style="green")
+        message.append("'.\nNothing to commit!", style="green")
         console.print(
             Panel(
                 message,
@@ -60,32 +67,32 @@ def show_dashboard():
         )
         return
 
-    # Si on a des modifications
-    content = Text("Tu es actuellement sur la branche : ", style="white")
+    # If there are modifications
+    content = Text("Current branch: ", style="white")
     content.append(f"{branch}\n\n", style="bold cyan")
-    content.append("📝 Fichiers modifiés :\n", style="bold yellow")
+    content.append("📝 Modified files:\n", style="bold yellow")
 
     for file_line in files:
-        # Le format '--porcelain' de Git donne " M fichier.py" ou "?? nouveau.txt"
+        # Git --porcelain format: " M filename.py" or "?? newfile.txt"
         state = file_line[:2]
         file_name = file_line[3:]
 
         if "??" in state:
-            content.append("  🆕 Non suivi  ", style="blue")
+            content.append("  🆕 Untracked  ", style="blue")
         elif "M" in state:
-            content.append("  🛠️  Modifié    ", style="yellow")
+            content.append("  🛠️  Modified   ", style="yellow")
         elif "D" in state:
-            content.append("  ❌ Supprimé   ", style="red")
+            content.append("  ❌ Deleted    ", style="red")
         elif "A" in state:
-            content.append("  ✅ Ajouté     ", style="green")
+            content.append("  ✅ Added      ", style="green")
         else:
             content.append(f"  📄 {state.strip()}      ", style="white")
 
         content.append(f"{file_name}\n", style="white")
 
-    content.append("\n👉 Tape ", style="dim")
+    content.append("\n👉 Run ", style="dim")
     content.append("giddy done", style="bold green")
-    content.append(" pour sauvegarder tout ça.", style="dim")
+    content.append(" to commit and push these changes.", style="dim")
 
     console.print(
         Panel(

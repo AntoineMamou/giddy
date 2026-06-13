@@ -4,66 +4,85 @@ from InquirerPy import inquirer
 
 
 def run_git_command(command: list[str]) -> bool:
-    """Exécute une commande Git silencieusement, retourne False si ça plante."""
+    """Execute a Git command silently.
+
+    Args:
+        command: List of command and arguments to execute.
+
+    Returns:
+        True if command succeeded, False otherwise.
+    """
     try:
-        # check=True fait planter proprement si Git renvoie une erreur
-        subprocess.run(command, check=True)
+        # check=True raises exception if Git returns an error
+        subprocess.run(command, check=True, capture_output=True)
         return True
     except subprocess.CalledProcessError:
-        print(f"\n❌ Aïe, la commande '{' '.join(command)}' a échoué.")
+        print(f"\n❌ Error: Command '{' '.join(command)}' failed.")
         return False
 
 
-def do_commit_and_push(commit_message: str):
-    """La routine complète pour sauvegarder et envoyer."""
-    print("\n📦 Ajout des fichiers modifiés...")
+def do_commit_and_push(commit_message: str) -> None:
+    """Commit and push changes to remote repository.
+
+    Args:
+        commit_message: The commit message to use.
+    """
+    print("\n📦 Staging modified files...")
     if not run_git_command(["git", "add", "."]):
         return
 
-    print("📝 Sauvegarde locale (Commit)...")
+    print("📝 Creating commit...")
     if not run_git_command(["git", "commit", "-m", commit_message]):
         return
 
-    print("🚀 Envoi sur GitHub (Push)...")
-    # Utiliser 'origin HEAD' permet de pousser la branche actuelle, peu importe son nom
+    print("🚀 Pushing to remote repository...")
+    # Using 'origin HEAD' pushes the current branch regardless of its name
     if run_git_command(["git", "push", "origin", "HEAD"]):
-        print("\n🎉 Terminé ! Ton code est propre et en sécurité.")
+        print("\n✅ Success! Your changes have been saved and pushed.")
 
 
-def start_new_branch(feature_name: str):
-    """Prépare le terrain en créant une nouvelle branche propre, avec auto-stash interactif."""
+def start_new_branch(feature_name: str) -> None:
+    """Create and checkout a new feature branch with interactive stash handling.
 
+    If there are modified files, prompts the user to either:
+    - Carry changes to the new branch
+    - Stash them and switch with a clean state
+    - Cancel the operation
+
+    Args:
+        feature_name: The name of the feature to create a branch for.
+    """
     current_branch = get_current_branch()
     files = get_modified_files()
 
     bring_changes = False
     stashed = False
 
-    # 1. Gestion interactive s'il y a des fichiers modifiés
+    # 1. Interactive file handling if there are modifications
     if files:
         print(
-            f"\n📦 Tu as {len(files)} fichier(s) modifié(s) sur la branche '{current_branch}'."
+            f"\n📦 You have {len(files)} modified file(s) on branch '{current_branch}'."
         )
 
         action = inquirer.select(
-            message="Que veux-tu faire de ces modifications ?",
+            message="What would you like to do with these changes?",
             choices=[
-                "🧳 Les emporter avec moi vers la nouvelle branche",
-                "🧊 Les laisser en attente ici (Stash) et partir à vide",
-                "❌ Annuler et rester ici",
+                "🧳 Take them with me to the new branch",
+                "🧊 Leave them here (stash) and switch with clean state",
+                "❌ Cancel and stay on current branch",
             ],
             pointer="👉",
         ).execute()
 
-        if "Annuler" in action:
-            print("🛑 Opération annulée. Tu es toujours sur ta branche actuelle.")
+        if "Cancel" in action:
+            print("🛑 Operation cancelled. You are still on your current branch.")
             return
 
-        if "emporter" in action:
+        if "Take them" in action:
             bring_changes = True
 
-        print("   Mise de côté (git stash)...")
-        # Le "-u" est notre gilet de sauvetage pour embarquer les fichiers non suivis (nouveaux)
+        print("   Stashing changes (git stash)...")
+        # The "-u" flag ensures untracked files are also stashed
         run_git_command(
             [
                 "git",
@@ -71,44 +90,49 @@ def start_new_branch(feature_name: str):
                 "push",
                 "-u",
                 "-m",
-                f"Giddy auto-stash depuis {current_branch}",
+                f"Giddy auto-stash from {current_branch}",
             ]
         )
         stashed = True
 
-    # 2. La routine classique (checkout main, pull, création de branche)
-    print("\n🔄 Bascule sur la branche principale (main)...")
+    # 2. Standard branch creation workflow
+    print("\n🔄 Switching to main branch...")
     subprocess.run(["git", "checkout", "main"], capture_output=True)
 
-    print("⬇️  Mise à jour locale depuis GitHub (pull)...")
+    print("⬇️  Updating from remote repository...")
     run_git_command(["git", "pull"])
 
+    # Clean branch name (e.g. "Add Login" -> "add-login")
     clean_name = feature_name.strip().lower().replace(" ", "-").replace("_", "-")
     branch_name = f"feat/{clean_name}"
 
-    print(f"🌱 Création de la branche '{branch_name}'...")
+    print(f"🌱 Creating branch '{branch_name}'...")
     if run_git_command(["git", "checkout", "-b", branch_name]):
-        print(f"\n✅ C'est parti ! Tu es sur la branche \033[96m{branch_name}\033[0m.")
+        print(f"\n✅ Branch created! You are now on \033[96m{branch_name}\033[0m.")
 
-    # 3. Restauration conditionnelle
+    # 3. Conditional restoration of changes
     if stashed and bring_changes:
-        print("\n✨ Restauration de tes modifications (git stash pop)...")
+        print("\n✨ Restoring your changes (git stash pop)...")
         result = subprocess.run(["git", "stash", "pop"], capture_output=True, text=True)
 
         if result.returncode != 0:
-            print("⚠️  Attention : Conflit potentiel lors de la restauration !")
-            print("   Tes fichiers sont là, mais tape 'giddy status' pour vérifier.")
+            print("⚠️  Warning: Potential conflict during restoration!")
+            print("   Your files are here, but run 'giddy status' to verify.")
         else:
-            print("✅ Modifications restaurées avec succès !")
+            print("✅ Changes restored successfully!")
     elif stashed and not bring_changes:
-        print("\n🧊 Tes anciennes modifications sont bien au chaud dans le stash.")
+        print("\n🧊 Your previous changes are safely stored in the stash.")
         print(
-            f"   Tu pourras les récupérer plus tard en retournant sur '{current_branch}' et en tapant 'git stash pop'."
+            f"   You can retrieve them later by returning to '{current_branch}' and running 'git stash pop'."
         )
 
 
 def get_current_branch() -> str:
-    """Retourne le nom de la branche actuelle."""
+    """Get the current Git branch name.
+
+    Returns:
+        The name of the current branch.
+    """
     result = subprocess.run(
         ["git", "branch", "--show-current"], capture_output=True, text=True
     )
@@ -116,8 +140,13 @@ def get_current_branch() -> str:
 
 
 def get_modified_files() -> list[str]:
-    """Retourne la liste des fichiers modifiés sous un format facile à lire."""
-    # --porcelain est fait exprès pour que les scripts lisent le statut Git
+    """Get list of modified files in the repository.
+
+    Returns:
+        List of files with their status codes in format: 'XY filename',
+        using Git's porcelain format for easy script parsing.
+    """
+    # --porcelain format is designed for scripts to easily parse Git status
     result = subprocess.run(
         ["git", "status", "--porcelain"], capture_output=True, text=True
     )

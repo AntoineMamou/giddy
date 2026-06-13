@@ -5,8 +5,13 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "giddy"
 version = "0.1.0"
-description = "Le wrapper Git qui te garde sur le droit chemin."
-requires-python = ">=3.8"
+description = "Interactive Git assistant that helps you follow best practices and simplify your workflow."
+requires-python = ">=3.9"
+authors = [
+    {name = "Antoine"},
+]
+readme = "README.md"
+license = {text = "MIT"}
 dependencies = [
     "InquirerPy>=0.3.4",
     "rich>=13.0.0",
