@@ -49,3 +49,20 @@ def start_new_branch(feature_name: str):
         print(
             f"\n✅ C'est parti ! Tu peux commencer à coder sur \033[96m{branch_name}\033[0m."
         )
+
+
+def get_current_branch() -> str:
+    """Retourne le nom de la branche actuelle."""
+    result = subprocess.run(
+        ["git", "branch", "--show-current"], capture_output=True, text=True
+    )
+    return result.stdout.strip()
+
+
+def get_modified_files() -> list[str]:
+    """Retourne la liste des fichiers modifiés sous un format facile à lire."""
+    # --porcelain est fait exprès pour que les scripts lisent le statut Git
+    result = subprocess.run(
+        ["git", "status", "--porcelain"], capture_output=True, text=True
+    )
+    return result.stdout.splitlines()

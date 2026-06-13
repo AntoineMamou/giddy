@@ -4,3 +4,4 @@ Version: 0.1.0
 Summary: Le wrapper Git qui te garde sur le droit chemin.
 Requires-Python: >=3.8
 Requires-Dist: InquirerPy>=0.3.4
+Requires-Dist: rich>=13.0.0

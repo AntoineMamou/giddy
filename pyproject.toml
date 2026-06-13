@@ -9,6 +9,7 @@ description = "Le wrapper Git qui te garde sur le droit chemin."
 requires-python = ">=3.8"
 dependencies = [
     "InquirerPy>=0.3.4",
+    "rich>=13.0.0",
 ]
 
 [project.scripts]
