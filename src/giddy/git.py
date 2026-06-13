@@ -127,6 +127,57 @@ def start_new_branch(feature_name: str) -> None:
         )
 
 
+def sync_main_and_clean() -> None:
+    """
+    Switches back to the main branch, pulls the latest changes, and cleans up dead branches.
+
+    This function automates the post-pull-request workflow by:
+    1. Checking out the 'main' branch.
+    2. Fetching and pruning remote tracking branches.
+    3. Pulling the latest changes from the remote repository.
+    4. Deleting local branches that have already been merged into main.
+
+    Returns:
+        None
+    """
+
+    print("\n🔄 Switching to the main branch...")
+    subprocess.run(["git", "checkout", "main"], capture_output=True)
+
+    print("⬇️  Updating and syncing from GitHub...")
+    # 'fetch -p' (prune) tells your local Git to forget remote branches
+    # that have been deleted on GitHub after the PR merge.
+    run_git_command(["git", "fetch", "-p"])
+    run_git_command(["git", "pull"])
+
+    print("\n🧹 Scanning for old local branches...")
+    # Ask Git: "Which branches are already merged into main?"
+    result = subprocess.run(
+        ["git", "branch", "--merged"], capture_output=True, text=True
+    )
+
+    # Clean up the output text (Git puts a '*' in front of the active branch)
+    merged_branches = [
+        b.strip().replace("* ", "") for b in result.stdout.splitlines() if b.strip()
+    ]
+
+    cleaned_count = 0
+    for branch in merged_branches:
+        # Golden rule: NEVER delete main or master!
+        if branch not in ["main", "master"]:
+            # Delete the branch (lowercase -d is safe because it's already merged)
+            subprocess.run(["git", "branch", "-d", branch], capture_output=True)
+            print(f"  🗑️  Deleted local branch: {branch}")
+            cleaned_count += 1
+
+    if cleaned_count == 0:
+        print("  ✨ Everything is clean, no dead branches found.")
+    else:
+        print(f"  ✅ Successfully cleaned {cleaned_count} branch(es)!")
+
+    print("\n🏠 Your repository is pristine. You are ready for a new 'giddy start'!")
+
+
 def get_current_branch() -> str:
     """Get the current Git branch name.
 

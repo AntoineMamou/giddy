@@ -2,7 +2,7 @@ import argparse
 import sys
 
 from giddy.cli import ask_commit_details, show_dashboard
-from giddy.git import do_commit_and_push, start_new_branch
+from giddy.git import do_commit_and_push, start_new_branch, sync_main_and_clean
 
 
 def app() -> None:
@@ -30,6 +30,10 @@ def app() -> None:
         "status", help="Display repository status and modified files."
     )
 
+    parser_sync = subparsers.add_parser(
+        "sync", help="Switch back to main, pull updates, and clean up dead branches."
+    )
+
     args = parser.parse_args()
 
     if args.command == "done":
@@ -43,6 +47,9 @@ def app() -> None:
 
     elif args.command == "status":
         show_dashboard()
+
+    elif args.command == "sync":
+        sync_main_and_clean()
 
 
 if __name__ == "__main__":
