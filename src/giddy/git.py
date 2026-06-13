@@ -1,5 +1,7 @@
 import subprocess
 
+from InquirerPy import inquirer
+
 
 def run_git_command(command: list[str]) -> bool:
     """Exécute une commande Git silencieusement, retourne False si ça plante."""
@@ -29,25 +31,79 @@ def do_commit_and_push(commit_message: str):
 
 
 def start_new_branch(feature_name: str):
-    """Prépare le terrain en créant une nouvelle branche propre."""
+    """Prépare le terrain en créant une nouvelle branche propre, avec auto-stash interactif."""
 
+    current_branch = get_current_branch()
+    files = get_modified_files()
+
+    bring_changes = False
+    stashed = False
+
+    # 1. Gestion interactive s'il y a des fichiers modifiés
+    if files:
+        print(
+            f"\n📦 Tu as {len(files)} fichier(s) modifié(s) sur la branche '{current_branch}'."
+        )
+
+        action = inquirer.select(
+            message="Que veux-tu faire de ces modifications ?",
+            choices=[
+                "🧳 Les emporter avec moi vers la nouvelle branche",
+                "🧊 Les laisser en attente ici (Stash) et partir à vide",
+                "❌ Annuler et rester ici",
+            ],
+            pointer="👉",
+        ).execute()
+
+        if "Annuler" in action:
+            print("🛑 Opération annulée. Tu es toujours sur ta branche actuelle.")
+            return
+
+        if "emporter" in action:
+            bring_changes = True
+
+        print("   Mise de côté (git stash)...")
+        # Le "-u" est notre gilet de sauvetage pour embarquer les fichiers non suivis (nouveaux)
+        run_git_command(
+            [
+                "git",
+                "stash",
+                "push",
+                "-u",
+                "-m",
+                f"Giddy auto-stash depuis {current_branch}",
+            ]
+        )
+        stashed = True
+
+    # 2. La routine classique (checkout main, pull, création de branche)
     print("\n🔄 Bascule sur la branche principale (main)...")
-    # On utilise subprocess.run directement ici pour ne pas planter si la branche s'appelle "master"
-    # ou si on y est déjà.
     subprocess.run(["git", "checkout", "main"], capture_output=True)
 
     print("⬇️  Mise à jour locale depuis GitHub (pull)...")
-    # C'est crucial pour être sûr de partir du code le plus récent
     run_git_command(["git", "pull"])
 
-    # Nettoyage du nom entré par l'utilisateur (ex: "Ajout Login" -> "ajout-login")
     clean_name = feature_name.strip().lower().replace(" ", "-").replace("_", "-")
     branch_name = f"feat/{clean_name}"
 
     print(f"🌱 Création de la branche '{branch_name}'...")
     if run_git_command(["git", "checkout", "-b", branch_name]):
+        print(f"\n✅ C'est parti ! Tu es sur la branche \033[96m{branch_name}\033[0m.")
+
+    # 3. Restauration conditionnelle
+    if stashed and bring_changes:
+        print("\n✨ Restauration de tes modifications (git stash pop)...")
+        result = subprocess.run(["git", "stash", "pop"], capture_output=True, text=True)
+
+        if result.returncode != 0:
+            print("⚠️  Attention : Conflit potentiel lors de la restauration !")
+            print("   Tes fichiers sont là, mais tape 'giddy status' pour vérifier.")
+        else:
+            print("✅ Modifications restaurées avec succès !")
+    elif stashed and not bring_changes:
+        print("\n🧊 Tes anciennes modifications sont bien au chaud dans le stash.")
         print(
-            f"\n✅ C'est parti ! Tu peux commencer à coder sur \033[96m{branch_name}\033[0m."
+            f"   Tu pourras les récupérer plus tard en retournant sur '{current_branch}' et en tapant 'git stash pop'."
         )
 
 
