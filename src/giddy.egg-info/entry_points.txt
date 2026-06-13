@@ -1,0 +1,2 @@
+[console_scripts]
+giddy = giddy.main:app

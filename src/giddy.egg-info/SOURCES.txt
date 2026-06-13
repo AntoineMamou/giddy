@@ -1,0 +1,11 @@
+README.md
+pyproject.toml
+src/giddy/__init__.py
+src/giddy/cli.py
+src/giddy/main.py
+src/giddy.egg-info/PKG-INFO
+src/giddy.egg-info/SOURCES.txt
+src/giddy.egg-info/dependency_links.txt
+src/giddy.egg-info/entry_points.txt
+src/giddy.egg-info/requires.txt
+src/giddy.egg-info/top_level.txt
