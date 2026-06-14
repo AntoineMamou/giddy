@@ -50,6 +50,18 @@ def do_commit_and_push(commit_message: str, files_to_stage: list[str]) -> None:
     if run_git_command(["git", "push", "origin", "HEAD"]):
         print("\n🎉 Done! Your code is safely pushed.")
 
+        branch = get_current_branch()
+        # We only show the PR link if we are NOT on main/master
+        if branch not in ["main", "master"]:
+            repo_url = get_github_repo_url()
+            if repo_url:
+                # The '?expand=1' parameter tells GitHub to automatically open the PR creation form
+                pr_url = f"{repo_url}/compare/main...{branch}?expand=1"
+
+                print("\n🌐 Want to merge this? Create a Pull Request here:")
+                # Using ANSI codes to make the link blue and underlined for modern terminals
+                print(f"   \033[94m\033[4m{pr_url}\033[0m")
+
 
 def start_new_branch(feature_name: str) -> None:
     """Create and checkout a new feature branch with interactive stash handling.
@@ -212,3 +224,36 @@ def get_modified_files() -> list[str]:
         ["git", "status", "--porcelain"], capture_output=True, text=True
     )
     return result.stdout.splitlines()
+
+
+def get_github_repo_url() -> str:
+    """
+    Extracts the GitHub repository URL from the local git configuration.
+
+    Reads 'remote.origin.url' and formats it into a clean HTTPS web link,
+    handling both SSH (git@github.com:...) and HTTPS (https://...) formats.
+
+    Returns:
+        str: The clean base URL of the GitHub repository, or an empty string
+             if it cannot be found or parsed.
+    """
+    # We ask Git for the remote URL silently
+    result = subprocess.run(
+        ["git", "config", "--get", "remote.origin.url"], capture_output=True, text=True
+    )
+    url = result.stdout.strip()
+
+    if not url:
+        return ""
+
+    # Convert SSH format: git@github.com:owner/repo.git -> https://github.com/owner/repo
+    if url.startswith("git@github.com:"):
+        clean_path = url.replace("git@github.com:", "").replace(".git", "")
+        return f"https://github.com/{clean_path}"
+
+    # Convert HTTPS format: https://github.com/owner/repo.git -> https://github.com/owner/repo
+    if url.startswith("https://github.com/"):
+        clean_url = url.replace(".git", "")
+        return clean_url
+
+    return ""
