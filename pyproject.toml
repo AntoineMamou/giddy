@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "giddy"
 version = "0.1.0"
 description = "Interactive Git assistant that helps you follow best practices and simplify your workflow."
-requires-python = ">=3.9"
+requires-python = ">=3.11"
 authors = [
     {name = "Antoine"},
 ]
