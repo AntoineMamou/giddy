@@ -320,6 +320,7 @@ giddy/
 │   ├── __init__.py          # Package metadata
 │   ├── main.py              # CLI entry point
 │   ├── cli.py               # User prompts and UI
+|   ├── config.py            # TOML configuration parser
 │   └── git.py               # Git command wrappers
 ├── pyproject.toml           # Project configuration
 └── README.md                # This file
