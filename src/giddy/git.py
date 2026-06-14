@@ -2,6 +2,8 @@ import subprocess
 
 from InquirerPy import inquirer
 
+from giddy.config import load_config
+
 
 def run_git_command(command: list[str]) -> bool:
     """Execute a Git command silently.
@@ -74,6 +76,10 @@ def start_new_branch(feature_name: str) -> None:
     Args:
         feature_name: The name of the feature to create a branch for.
     """
+
+    config = load_config()
+    base_branch = config.get("core", {}).get("base_branch", "main")
+
     current_branch = get_current_branch()
     files = get_modified_files()
 
@@ -118,8 +124,8 @@ def start_new_branch(feature_name: str) -> None:
         stashed = True
 
     # 2. Standard branch creation workflow
-    print("\n🔄 Switching to main branch...")
-    subprocess.run(["git", "checkout", "main"], capture_output=True)
+    print(f"\n🔄 Switching to the base branch ('{base_branch}')...")
+    subprocess.run(["git", "checkout", base_branch], capture_output=True)
 
     print("⬇️  Updating from remote repository...")
     run_git_command(["git", "pull"])
@@ -163,8 +169,11 @@ def sync_main_and_clean() -> None:
         None
     """
 
-    print("\n🔄 Switching to the main branch...")
-    subprocess.run(["git", "checkout", "main"], capture_output=True)
+    config = load_config()
+    base_branch = config.get("core", {}).get("base_branch", "main")
+
+    print(f"\n🔄 Switching to the base branch ('{base_branch}')...")
+    subprocess.run(["git", "checkout", base_branch], capture_output=True)
 
     print("⬇️  Updating and syncing from GitHub...")
     # 'fetch -p' (prune) tells your local Git to forget remote branches
@@ -186,7 +195,7 @@ def sync_main_and_clean() -> None:
     cleaned_count = 0
     for branch in merged_branches:
         # Golden rule: NEVER delete main or master!
-        if branch not in ["main", "master"]:
+        if branch not in ["main", "master", base_branch]:
             # Delete the branch (lowercase -d is safe because it's already merged)
             subprocess.run(["git", "branch", "-d", branch], capture_output=True)
             print(f"  🗑️  Deleted local branch: {branch}")
