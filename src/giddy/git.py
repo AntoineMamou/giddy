@@ -56,14 +56,42 @@ def do_commit_and_push(commit_message: str, files_to_stage: list[str]) -> None:
         branch = get_current_branch()
         # We only show the PR link if we are NOT on main/master
         if branch not in ["main", "master"]:
-            repo_url = get_github_repo_url()
+            repo_url, provider = get_remote_repo_info()
             if repo_url:
-                # The '?expand=1' parameter tells GitHub to automatically open the PR creation form
-                pr_url = f"{repo_url}/compare/main...{branch}?expand=1"
+                if provider == "github":
+                    pr_url = f"{repo_url}/compare/main...{branch}?expand=1"
+                    pr_type = "Pull Request"
+                elif provider == "gitlab":
+                    # GitLab's specific URL structure for creating a Merge Request
+                    pr_url = f"{repo_url}/-/merge_requests/new?merge_request[source_branch]={branch}"
+                    pr_type = "Merge Request"
+                else:
+                    return
 
-                print("\n🌐 Want to merge this? Create a Pull Request here:")
-                # Using ANSI codes to make the link blue and underlined for modern terminals
+                print(f"\n🌐 Want to merge this? Create a {pr_type} here:")
                 print(f"   \033[94m\033[4m{pr_url}\033[0m")
+
+
+def clean_branch_name(feature_name: str) -> str:
+    """
+    Clean the feature name to create a valid Git branch name.
+
+    Args:
+        feature_name (str): The raw input from the user.
+
+    Returns:
+        str: A clean, safe branch name starting with 'feat/',
+             or an empty string if the input is invalid.
+    """
+    clean_name = feature_name.strip().lower().replace(" ", "-").replace("_", "-")
+    clean_name = re.sub(r"[^a-z0-9-]", "", clean_name)  # Remove special characters
+    clean_name = re.sub(r"-+", "-", clean_name)  # Prevent multiple consecutive dashes
+    clean_name = clean_name.strip("-")  # Remove leading/trailing dashes
+
+    if not clean_name:
+        return ""
+
+    return f"feat/{clean_name}"
 
 
 def start_new_branch(feature_name: str) -> None:
@@ -77,6 +105,16 @@ def start_new_branch(feature_name: str) -> None:
     Args:
         feature_name: The name of the feature to create a branch for.
     """
+
+    # Clean branch name (e.g. "Add Login" -> "add-login")
+    branch_name = clean_branch_name(feature_name)
+
+    if not branch_name:
+        print(
+            "\n🛑 Error: The feature name is invalid (empty or only special characters)."
+        )
+        print("   Please provide a name with letters or numbers.")
+        return
 
     config = load_config()
     base_branch = config.get("core", {}).get("base_branch", "main")
@@ -135,12 +173,6 @@ def start_new_branch(feature_name: str) -> None:
     if not run_git_command(["git", "pull"]):
         print("\n⚠️ Warning : Failed to update from remote repository. Process stopped.")
         return
-
-    # Clean branch name (e.g. "Add Login" -> "add-login")
-    clean_name = feature_name.strip().lower().replace(" ", "-").replace("_", "-")
-    clean_name = re.sub(r"[^a-z0-9-]", "", clean_name)
-    clean_name = re.sub(r"-+", "-", clean_name)
-    branch_name = f"feat/{clean_name}"
 
     print(f"🌱 Creating branch '{branch_name}'...")
     if run_git_command(["git", "checkout", "-b", branch_name]):
@@ -248,34 +280,42 @@ def get_modified_files() -> list[str]:
     return result.stdout.splitlines()
 
 
-def get_github_repo_url() -> str:
+def get_remote_repo_info() -> tuple[str, str]:
     """
-    Extracts the GitHub repository URL from the local git configuration.
+    Extracts the repository URL and provider from the local git configuration.
 
     Reads 'remote.origin.url' and formats it into a clean HTTPS web link,
-    handling both SSH (git@github.com:...) and HTTPS (https://...) formats.
+    handling both SSH (git@...) and HTTPS (https://...) formats.
 
     Returns:
-        str: The clean base URL of the GitHub repository, or an empty string
-             if it cannot be found or parsed.
+        tuple[str, str]: A tuple containing (repo_url, provider_name).
+                         provider_name can be "github" or "gitlab".
+                         Returns ("", "") if unsupported or not found.
     """
-    # We ask Git for the remote URL silently
     result = subprocess.run(
         ["git", "config", "--get", "remote.origin.url"], capture_output=True, text=True
     )
     url = result.stdout.strip()
 
     if not url:
-        return ""
+        return "", ""
 
-    # Convert SSH format: git@github.com:owner/repo.git -> https://github.com/owner/repo
-    if url.startswith("git@github.com:"):
-        clean_path = url.replace("git@github.com:", "").replace(".git", "")
-        return f"https://github.com/{clean_path}"
+    # Check for GitHub
+    if "github.com" in url:
+        if url.startswith("git@github.com:"):
+            clean_path = url.replace("git@github.com:", "").replace(".git", "")
+            return f"https://github.com/{clean_path}", "github"
+        if url.startswith("https://github.com/"):
+            clean_url = url.replace(".git", "")
+            return clean_url, "github"
 
-    # Convert HTTPS format: https://github.com/owner/repo.git -> https://github.com/owner/repo
-    if url.startswith("https://github.com/"):
-        clean_url = url.replace(".git", "")
-        return clean_url
+    # Check for GitLab
+    if "gitlab.com" in url:
+        if url.startswith("git@gitlab.com:"):
+            clean_path = url.replace("git@gitlab.com:", "").replace(".git", "")
+            return f"https://gitlab.com/{clean_path}", "gitlab"
+        if url.startswith("https://gitlab.com/"):
+            clean_url = url.replace(".git", "")
+            return clean_url, "gitlab"
 
-    return ""
+    return "", ""
