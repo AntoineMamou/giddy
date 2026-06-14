@@ -1,3 +1,4 @@
+import re
 import subprocess
 
 from InquirerPy import inquirer
@@ -125,13 +126,20 @@ def start_new_branch(feature_name: str) -> None:
 
     # 2. Standard branch creation workflow
     print(f"\n🔄 Switching to the base branch ('{base_branch}')...")
-    subprocess.run(["git", "checkout", base_branch], capture_output=True)
+
+    if not run_git_command(["git", "checkout", base_branch]):
+        print("\n🛑 Error : Impossible to switch branches. Check your workspace.")
+        return
 
     print("⬇️  Updating from remote repository...")
-    run_git_command(["git", "pull"])
+    if not run_git_command(["git", "pull"]):
+        print("\n⚠️ Warning : Failed to update from remote repository. Process stopped.")
+        return
 
     # Clean branch name (e.g. "Add Login" -> "add-login")
     clean_name = feature_name.strip().lower().replace(" ", "-").replace("_", "-")
+    clean_name = re.sub(r"[^a-z0-9-]", "", clean_name)
+    clean_name = re.sub(r"-+", "-", clean_name)
     branch_name = f"feat/{clean_name}"
 
     print(f"🌱 Creating branch '{branch_name}'...")
@@ -173,13 +181,18 @@ def sync_main_and_clean() -> None:
     base_branch = config.get("core", {}).get("base_branch", "main")
 
     print(f"\n🔄 Switching to the base branch ('{base_branch}')...")
-    subprocess.run(["git", "checkout", base_branch], capture_output=True)
+    if not run_git_command(["git", "checkout", base_branch]):
+        print("\n🛑 Error : Impossible to come back to the main branch.")
+        return
 
     print("⬇️  Updating and syncing from GitHub...")
     # 'fetch -p' (prune) tells your local Git to forget remote branches
     # that have been deleted on GitHub after the PR merge.
     run_git_command(["git", "fetch", "-p"])
-    run_git_command(["git", "pull"])
+
+    if not run_git_command(["git", "pull"]):
+        print("\n🛑 Error : Impossible to fetch the latest changes. Cleanup aborted.")
+        return
 
     print("\n🧹 Scanning for old local branches...")
     # Ask Git: "Which branches are already merged into main?"
