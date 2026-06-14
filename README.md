@@ -2,7 +2,7 @@
 
 An interactive Git assistant that simplifies your workflow and helps you follow best practices.
 
-[![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
+[![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 ## Overview
@@ -20,7 +20,7 @@ Giddy is a command-line tool that makes Git workflows smoother and more intuitiv
 ## Installation
 
 ### Requirements
-- Python 3.9 or higher
+- Python 3.11 or higher
 - Git 2.0 or higher
 
 ### To use giddy globally
@@ -33,7 +33,15 @@ pipx install -e .
 
 ## Quick Start
 
-### 1. Start a New Feature
+### 1. Initialize configuration (Optional)
+
+```bash
+giddy init
+```
+
+Generates a .giddy.toml file to customize your base branch and commit scopes.
+
+### 2. Start a New Feature
 
 ```bash
 giddy start "add user authentication"
@@ -45,7 +53,7 @@ Giddy will:
 - Create a new feature branch: `feat/add-user-authentication`
 - Optionally carry or stash your current changes
 
-### 2. Check Status
+### 3. Check Status
 
 ```bash
 giddy status
@@ -56,7 +64,7 @@ View:
 - Modified files and their status
 - Next steps
 
-### 3. Commit Changes
+### 4. Commit Changes
 
 ```bash
 giddy done
@@ -68,7 +76,7 @@ Giddy will:
 - Push changes to your remote repository
 - Show you the Pull Request link if needed
 
-### 4. Sync with Main
+### 5. Sync with Main
 
 ```bash
 giddy sync
@@ -80,6 +88,19 @@ Giddy will:
 - Clean up deleted remote branches
 
 ## Commands
+
+### giddy init
+
+Generate a default .giddy.toml configuration file in your current directory.
+
+**Features:**
+
+- Safely checks if a configuration already exists to prevent overwriting
+- Generates a commented template
+- Allows you to define your custom base_branch (e.g., develop, master)
+- Allows you to define predefined scopes (transforms the text input into a dropdown menu during giddy done)
+
+---
 
 ### `giddy start <feature-name>`
 
@@ -339,7 +360,6 @@ Contributions are welcome! Here's how to help:
 
 ## Roadmap
 
-- [ ] Config file support (`.giddyrc`)
 - [ ] Commit templates
 - [ ] Integration with GitHub/GitLab APIs
 - [ ] Undo/rollback functionality
