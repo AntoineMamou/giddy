@@ -1,2 +1,0 @@
-InquirerPy>=0.3.4
-rich>=13.0.0
