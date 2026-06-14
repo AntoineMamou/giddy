@@ -4,6 +4,7 @@ from rich.console import Console
 from rich.panel import Panel
 from rich.text import Text
 
+from giddy.config import load_config
 from giddy.git import get_current_branch, get_modified_files
 
 
@@ -13,6 +14,8 @@ def ask_commit_details() -> str:
     Returns:
         A formatted commit message following conventional commits format.
     """
+    config = load_config()
+    defined_scopes = config.get("commits", {}).get("scopes", [])
 
     commit_type_full = inquirer.select(
         message="What type of change did you make?",
@@ -28,9 +31,18 @@ def ask_commit_details() -> str:
 
     commit_type = commit_type_full.split()[0]
 
-    scope = inquirer.text(
-        message="Which part of the project? (e.g., api, ui - leave blank to skip):"
-    ).execute()
+    if defined_scopes:
+        # If scopes are defined in config, show a dropdown menu
+        choices = ["(none)"] + defined_scopes
+        scope_choice = inquirer.select(
+            message="Select the scope of this change:", choices=choices, pointer="👉"
+        ).execute()
+        scope = "" if scope_choice == "(none)" else scope_choice
+    else:
+        # Default behavior: free text input
+        scope = inquirer.text(
+            message="Scope of this change (e.g., api, ui - Enter to skip):"
+        ).execute()
 
     description = inquirer.text(
         message="Describe your change (in lowercase without ending punctuation):",

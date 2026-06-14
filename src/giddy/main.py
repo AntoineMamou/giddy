@@ -2,6 +2,7 @@ import argparse
 import sys
 
 from giddy.cli import ask_commit_details, ask_files_to_stage, show_dashboard
+from giddy.config import init_config
 from giddy.git import (
     do_commit_and_push,
     get_modified_files,
@@ -39,6 +40,10 @@ def app() -> None:
         "sync", help="Switch back to main, pull updates, and clean up dead branches."
     )
 
+    parser_init = subparsers.add_parser(
+        "init", help="Generate a default .giddy.toml configuration file."
+    )
+
     args = parser.parse_args()
 
     if args.command == "done":
@@ -66,6 +71,9 @@ def app() -> None:
 
     elif args.command == "sync":
         sync_main_and_clean()
+
+    elif args.command == "init":
+        init_config()
 
 
 if __name__ == "__main__":
