@@ -21,24 +21,34 @@ def run_git_command(command: list[str]) -> bool:
         return False
 
 
-def do_commit_and_push(commit_message: str) -> None:
-    """Commit and push changes to remote repository.
+def do_commit_and_push(commit_message: str, files_to_stage: list[str]) -> None:
+    """
+    Stages selected files, creates a commit, and pushes to the remote repository.
 
     Args:
-        commit_message: The commit message to use.
+        commit_message (str): The formatted Conventional Commit message.
+        files_to_stage (list[str]): The exact list of file paths to stage.
+
+    Returns:
+        None
     """
-    print("\n📦 Staging modified files...")
-    if not run_git_command(["git", "add", "."]):
+    if not files_to_stage:
+        print("\n❌ No files selected. Commit aborted.")
         return
 
-    print("📝 Creating commit...")
+    print(f"\n📦 Staging {len(files_to_stage)} selected file(s)...")
+    # We pass the list of files directly to the git add command
+    command = ["git", "add"] + files_to_stage
+    if not run_git_command(command):
+        return
+
+    print("📝 Saving local commit...")
     if not run_git_command(["git", "commit", "-m", commit_message]):
         return
 
-    print("🚀 Pushing to remote repository...")
-    # Using 'origin HEAD' pushes the current branch regardless of its name
+    print("🚀 Pushing to GitHub...")
     if run_git_command(["git", "push", "origin", "HEAD"]):
-        print("\n✅ Success! Your changes have been saved and pushed.")
+        print("\n🎉 Done! Your code is safely pushed.")
 
 
 def start_new_branch(feature_name: str) -> None:

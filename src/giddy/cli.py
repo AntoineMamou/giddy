@@ -101,3 +101,37 @@ def show_dashboard() -> None:
             border_style="yellow",
         )
     )
+
+
+def ask_files_to_stage() -> list[str]:
+    """
+    Prompts the user to select specific files to stage for the commit.
+
+    Retrieves the list of modified/untracked files using Git porcelain format.
+    Displays an interactive checkbox menu. The user can press 'Space' to select
+    individual files, or 'a' to select all.
+
+    Returns:
+        list[str]: A list of file paths selected by the user. Returns an empty
+                   list if no files are modified or selected.
+    """
+    raw_files = get_modified_files()
+
+    if not raw_files:
+        return []
+
+    # Prepare choices for InquirerPy:
+    # 'name' is what the user sees (e.g., " M src/main.py")
+    # 'value' is what the program gets (e.g., "src/main.py")
+    choices = []
+    for line in raw_files:
+        file_path = line[3:].strip()
+        choices.append({"name": line, "value": file_path})
+
+    selected_files = inquirer.checkbox(
+        message="Which files do you want to commit?",
+        choices=choices,
+        instruction="(Press <Space> to select, <Alt+a> to toggle all, <Enter> to confirm)",
+    ).execute()
+
+    return selected_files

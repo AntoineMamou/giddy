@@ -1,8 +1,13 @@
 import argparse
 import sys
 
-from giddy.cli import ask_commit_details, show_dashboard
-from giddy.git import do_commit_and_push, start_new_branch, sync_main_and_clean
+from giddy.cli import ask_commit_details, ask_files_to_stage, show_dashboard
+from giddy.git import (
+    do_commit_and_push,
+    get_modified_files,
+    start_new_branch,
+    sync_main_and_clean,
+)
 
 
 def app() -> None:
@@ -37,9 +42,20 @@ def app() -> None:
     args = parser.parse_args()
 
     if args.command == "done":
+        if not get_modified_files():
+            print("\n✨ Working tree is clean. Nothing to commit!")
+            return
+
         print("\n🐎 Giddy up! Let's prepare this commit.\n")
+        files_to_stage = ask_files_to_stage()
+
+        if not files_to_stage:
+            print("\n🛑 You didn't select any files. Operation aborted.")
+            return
+
         commit_message = ask_commit_details()
-        do_commit_and_push(commit_message)
+
+        do_commit_and_push(commit_message, files_to_stage)
 
     elif args.command == "start":
         print(f"\n🐎 Giddy is preparing a branch for: {args.name}")
