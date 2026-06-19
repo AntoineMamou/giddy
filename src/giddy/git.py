@@ -122,45 +122,11 @@ def start_new_branch(feature_name: str) -> None:
     current_branch = get_current_branch()
     files = get_modified_files()
 
-    bring_changes = False
-    stashed = False
-
-    # 1. Interactive file handling if there are modifications
-    if files:
-        print(
-            f"\n📦 You have {len(files)} modified file(s) on branch '{current_branch}'."
-        )
-
-        action = inquirer.select(
-            message="What would you like to do with these changes?",
-            choices=[
-                "🧳 Take them with me to the new branch",
-                "🧊 Leave them here (stash) and switch with clean state",
-                "❌ Cancel and stay on current branch",
-            ],
-            pointer="👉",
-        ).execute()
-
-        if "Cancel" in action:
-            print("🛑 Operation cancelled. You are still on your current branch.")
-            return
-
-        if "Take them" in action:
-            bring_changes = True
-
-        print("   Stashing changes (git stash)...")
-        # The "-u" flag ensures untracked files are also stashed
-        run_git_command(
-            [
-                "git",
-                "stash",
-                "push",
-                "-u",
-                "-m",
-                f"Giddy auto-stash from {current_branch}",
-            ]
-        )
-        stashed = True
+    should_continue, bring_changes, stashed = handle_uncommitted_changes(
+        current_branch, files
+    )
+    if not should_continue:
+        return
 
     # 2. Standard branch creation workflow
     print(f"\n🔄 Switching to the base branch ('{base_branch}')...")
@@ -179,20 +145,7 @@ def start_new_branch(feature_name: str) -> None:
         print(f"\n✅ Branch created! You are now on \033[96m{branch_name}\033[0m.")
 
     # 3. Conditional restoration of changes
-    if stashed and bring_changes:
-        print("\n✨ Restoring your changes (git stash pop)...")
-        result = subprocess.run(["git", "stash", "pop"], capture_output=True, text=True)
-
-        if result.returncode != 0:
-            print("⚠️  Warning: Potential conflict during restoration!")
-            print("   Your files are here, but run 'giddy status' to verify.")
-        else:
-            print("✅ Changes restored successfully!")
-    elif stashed and not bring_changes:
-        print("\n🧊 Your previous changes are safely stored in the stash.")
-        print(
-            f"   You can retrieve them later by returning to '{current_branch}' and running 'git stash pop'."
-        )
+    restore_stashed_changes(stashed, bring_changes, current_branch)
 
 
 def sync_main_and_clean() -> None:
@@ -319,3 +272,94 @@ def get_remote_repo_info() -> tuple[str, str]:
             return clean_url, "gitlab"
 
     return "", ""
+
+
+def get_local_branches() -> list[str]:
+    """Get a list of local branches sorted by recent commit date."""
+    try:
+        # We use subprocess.run directly here because we NEED the text output,
+        # which our generic run_git_command (returning bool) does not provide.
+        result = subprocess.run(
+            [
+                "git",
+                "for-each-ref",
+                "--sort=-committerdate",
+                "--format=%(refname:short)",
+                "refs/heads/",
+            ],
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+
+        output = result.stdout.strip()
+        if not output:
+            return []
+
+        return [branch.strip() for branch in output.split("\n") if branch.strip()]
+
+    except subprocess.CalledProcessError:
+        print("\n❌ Error: Failed to fetch local branches.")
+        return []
+
+
+def switch_to_branch(branch_name: str) -> bool:
+    """Switch to an existing branch."""
+    return run_git_command(["git", "checkout", branch_name]) is not None
+
+
+def handle_uncommitted_changes(
+    current_branch: str, files: list[str]
+) -> tuple[bool, bool, bool]:
+    """
+    Prompt the user to handle uncommitted changes before switching branches.
+    Returns a tuple: (should_continue, bring_changes, stashed)
+    """
+    if not files:
+        return True, False, False
+
+    print(f"\n📦 You have {len(files)} modified file(s) on branch '{current_branch}'.")
+
+    action = inquirer.select(
+        message="What would you like to do with these changes?",
+        choices=[
+            "🧳 Take them with me to the new branch",
+            "🧊 Leave them here (stash) and switch with clean state",
+            "❌ Cancel and stay on current branch",
+        ],
+        pointer="👉",
+    ).execute()
+
+    if "Cancel" in action:
+        print("🛑 Operation cancelled. You are still on your current branch.")
+        return False, False, False
+
+    bring_changes = "Take them" in action
+
+    print("   Stashing changes (git stash)...")
+    run_git_command(
+        ["git", "stash", "push", "-u", "-m", f"Giddy auto-stash from {current_branch}"]
+    )
+
+    return True, bring_changes, True
+
+
+def restore_stashed_changes(
+    stashed: bool, bring_changes: bool, original_branch: str
+) -> None:
+    """Restore stashed changes if the user requested to bring them."""
+    if stashed and bring_changes:
+        print("\n✨ Restoring your changes (git stash pop)...")
+        result = subprocess.run(["git", "stash", "pop"], capture_output=True, text=True)
+
+        if result.returncode != 0:
+            print("⚠️  Warning: Potential conflict during restoration!")
+            print("   Your files are here, but run 'giddy status' to verify.")
+        else:
+            print("✅ Changes restored successfully!")
+
+    elif stashed and not bring_changes:
+        print("\n🧊 Your previous changes are safely stored in the stash.")
+        print(
+            f"   You can retrieve them later by returning to '{original_branch}' and running 'git stash pop'."
+        )

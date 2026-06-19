@@ -2,12 +2,22 @@ import argparse
 import subprocess
 import sys
 
-from giddy.cli import ask_commit_details, ask_files_to_stage, show_dashboard
+from giddy.cli import (
+    ask_branch_to_switch,
+    ask_commit_details,
+    ask_files_to_stage,
+    show_dashboard,
+)
 from giddy.config import init_config
 from giddy.git import (
     do_commit_and_push,
+    get_current_branch,
+    get_local_branches,
     get_modified_files,
+    handle_uncommitted_changes,
+    restore_stashed_changes,
     start_new_branch,
+    switch_to_branch,
     sync_main_and_clean,
 )
 
@@ -36,6 +46,36 @@ def check_git_environment(command: str) -> None:
             "\n🛑 Error : This directory is not a Git repository. Run 'git init' first."
         )
         sys.exit(1)
+
+
+def switch_branch():
+    """Handle the interactive branch switching workflow."""
+    current_branch = get_current_branch()
+    files = get_modified_files()
+
+    # 1. Check for uncommitted changes
+    should_continue, bring_changes, stashed = handle_uncommitted_changes(
+        current_branch, files
+    )
+
+    if not should_continue:
+        return  # The user selected "Cancel"
+
+    # 2. Get branches and ask user
+    branches = get_local_branches()
+    target_branch = ask_branch_to_switch(branches, current_branch)
+
+    if not target_branch:
+        return  # User cancelled or no branches
+
+    # 3. Perform the switch
+    print(f"🔄 Switching to {target_branch}...")
+    if switch_to_branch(target_branch):
+        print(f"✅ Switched to \033[96m{target_branch}\033[0m!")
+
+        restore_stashed_changes(stashed, bring_changes, current_branch)
+    else:
+        print("❌ Failed to switch branch. Please check for conflicts.")
 
 
 def app() -> None:
@@ -73,6 +113,10 @@ def app() -> None:
             "init", help="Generate a default .giddy.toml configuration file."
         )
 
+        parser_switch = subparsers.add_parser(
+            "switch", help="Switch to a different branch."
+        )
+
         args = parser.parse_args()
 
         # Check environment before proceeding
@@ -106,6 +150,9 @@ def app() -> None:
 
         elif args.command == "init":
             init_config()
+
+        elif args.command == "switch":
+            switch_branch()
 
     except KeyboardInterrupt:
         # Gracefully handle Ctrl+C to prevent ugly tracebacks
