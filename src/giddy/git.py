@@ -165,3 +165,13 @@ def untrack_file(file_path: str) -> bool:
     """Remove a file from Git tracking without deleting it locally."""
     # -r is for recursive (if it's a directory), --cached keeps the local file
     return run_git_command(["git", "rm", "-r", "--cached", file_path])
+
+
+def commit_amend() -> bool:
+    """Amend the last commit without changing its message."""
+    return run_git_command(["git", "commit", "--amend", "--no-edit"])
+
+
+def push_force() -> bool:
+    """Force push safely using --force-with-lease."""
+    return run_git_command(["git", "push", "--force-with-lease", "origin", "HEAD"])

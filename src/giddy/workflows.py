@@ -1,4 +1,5 @@
 from giddy.git import (
+    commit_amend,
     commit_changes,
     create_and_checkout_branch,
     delete_local_branch,
@@ -10,6 +11,7 @@ from giddy.git import (
     get_remote_repo_info,
     get_tracked_files,
     pull_changes,
+    push_force,
     push_head,
     stage_files,
     stash_pop,
@@ -288,3 +290,47 @@ def untrack_workflow() -> None:
         )
     else:
         show_error("Failed to untrack the file.")
+
+
+def amend_workflow() -> None:
+    """Workflow for 'giddy amend'"""
+    current_branch = get_current_branch()
+    config = load_config()
+    base_branch = config.get("core", {}).get("base_branch", "main")
+
+    # 🛑 SECURITY : Forbid to rewrite the history of the main branch!
+    if current_branch in ["main", "master", base_branch]:
+        show_error(
+            f"Safety first! You cannot amend and force-push on '{current_branch}'."
+        )
+        return
+
+    files = get_modified_files()
+    if not files:
+        show_success("Working tree is clean. Nothing to amend!")
+        return
+
+    show_step("Oups! Let's fix that last commit.", icon="🩹")
+    files_to_stage = ask_files_to_stage(files)
+
+    if not files_to_stage:
+        show_warning("No files selected. Operation aborted.")
+        return
+
+    show_step(f"Staging {len(files_to_stage)} forgotten file(s)...", icon="📦")
+    if not stage_files(files_to_stage):
+        show_error("Failed to stage files.")
+        return
+
+    show_step("Amending the last commit...", icon="📝")
+    if not commit_amend():
+        show_error("Failed to amend commit.")
+        return
+
+    show_step("Force-pushing to remote (safely)...", icon="🚀")
+    if push_force():
+        show_success("Done! Your last commit has been perfectly updated.")
+    else:
+        show_error(
+            "Failed to force-push. Someone else might have updated the branch on the remote."
+        )
