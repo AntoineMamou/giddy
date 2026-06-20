@@ -7,6 +7,7 @@ from giddy.git import get_current_branch, get_modified_files
 from giddy.ui import show_dashboard, show_error
 from giddy.utils import init_config
 from giddy.workflows import (
+    amend_workflow,
     commit_workflow,
     start_workflow,
     switch_workflow,
@@ -75,6 +76,9 @@ def app() -> None:
         subparsers.add_parser(
             "untrack", help="Stop tracking a file in Git without deleting it locally."
         )
+        subparsers.add_parser(
+            "amend", help="Quickly add forgotten files to your last commit."
+        )
 
         args = parser.parse_args()
 
@@ -104,8 +108,12 @@ def app() -> None:
 
         elif args.command == "undo":
             undo_workflow()
+
         elif args.command == "untrack":
             untrack_workflow()
+
+        elif args.command == "amend":
+            amend_workflow()
 
     except KeyboardInterrupt:
         # Gracefully handle Ctrl+C
