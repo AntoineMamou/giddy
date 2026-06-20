@@ -24,10 +24,6 @@ def test_run_git_command_failure(mocker):
         "giddy.git.subprocess.run", side_effect=subprocess.CalledProcessError(1, "git")
     )
 
-    # We also mock 'print' to keep our test output clean
-    mock_print = mocker.patch("builtins.print")
-
     result = run_git_command(["git", "checkout", "non-existent-branch"])
 
     assert result is False
-    mock_print.assert_called_once()

@@ -2,13 +2,15 @@ import argparse
 import subprocess
 import sys
 
-from giddy.cli import ask_commit_details, ask_files_to_stage, show_dashboard
-from giddy.config import init_config
-from giddy.git import (
-    do_commit_and_push,
-    get_modified_files,
-    start_new_branch,
-    sync_main_and_clean,
+# On importe nos belles briques !
+from giddy.git import get_current_branch, get_modified_files
+from giddy.ui import show_dashboard, show_error
+from giddy.utils import init_config
+from giddy.workflows import (
+    commit_workflow,
+    start_workflow,
+    switch_workflow,
+    sync_workflow,
 )
 
 
@@ -21,7 +23,7 @@ def check_git_environment(command: str) -> None:
     try:
         subprocess.run(["git", "--version"], capture_output=True, check=True)
     except (subprocess.CalledProcessError, FileNotFoundError):
-        print("\n🛑 Fatal Error : Git is not installed or not accessible in your PATH.")
+        show_error("Git is not installed or not accessible in your PATH.")
         sys.exit(1)
 
     # 2. Check if we are inside a Git repository
@@ -32,9 +34,7 @@ def check_git_environment(command: str) -> None:
             check=True,
         )
     except subprocess.CalledProcessError:
-        print(
-            "\n🛑 Error : This directory is not a Git repository. Run 'git init' first."
-        )
+        show_error("This directory is not a Git repository. Run 'git init' first.")
         sys.exit(1)
 
 
@@ -56,59 +56,49 @@ def app() -> None:
         )
         parser_start.add_argument("name", type=str, help="Name of the feature.")
 
-        parser_done = subparsers.add_parser(
+        subparsers.add_parser(
             "done", help="Create a commit and push changes to remote."
         )
-
-        parser_status = subparsers.add_parser(
+        subparsers.add_parser(
             "status", help="Display repository status and modified files."
         )
-
-        parser_sync = subparsers.add_parser(
+        subparsers.add_parser(
             "sync",
             help="Switch back to main, pull updates, and clean up dead branches.",
         )
-
-        parser_init = subparsers.add_parser(
+        subparsers.add_parser(
             "init", help="Generate a default .giddy.toml configuration file."
         )
+        subparsers.add_parser("switch", help="Switch to a different branch.")
 
         args = parser.parse_args()
 
         # Check environment before proceeding
         check_git_environment(args.command)
 
-        if args.command == "done":
-            if not get_modified_files():
-                print("\n✨ Working tree is clean. Nothing to commit!")
-                return
+        # Dispatch to the right workflow!
+        if args.command == "start":
+            start_workflow(args.name)
 
-            print("\n🐎 Giddy up! Let's prepare this commit.\n")
-            files_to_stage = ask_files_to_stage()
-
-            if not files_to_stage:
-                print("\n🛑 You didn't select any files. Operation aborted.")
-                return
-
-            commit_message = ask_commit_details()
-
-            do_commit_and_push(commit_message, files_to_stage)
-
-        elif args.command == "start":
-            print(f"\n🐎 Giddy is preparing a branch for: {args.name}")
-            start_new_branch(args.name)
+        elif args.command == "done":
+            commit_workflow()
 
         elif args.command == "status":
-            show_dashboard()
+            branch = get_current_branch()
+            files = get_modified_files()
+            show_dashboard(branch, files)
 
         elif args.command == "sync":
-            sync_main_and_clean()
+            sync_workflow()
 
         elif args.command == "init":
             init_config()
 
+        elif args.command == "switch":
+            switch_workflow()
+
     except KeyboardInterrupt:
-        # Gracefully handle Ctrl+C to prevent ugly tracebacks
+        # Gracefully handle Ctrl+C
         print("\n\n🛑 Operation cancelled. No changes were made.\n")
         sys.exit(0)
 
