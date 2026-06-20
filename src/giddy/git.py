@@ -153,3 +153,15 @@ def delete_local_branch(branch_name: str) -> bool:
 def undo_last_commit() -> bool:
     """Undo the last commit but keep files in the working directory."""
     return run_git_command(["git", "reset", "--soft", "HEAD~1"])
+
+
+def get_tracked_files() -> list[str]:
+    """Get a list of all files currently tracked by Git."""
+    result = subprocess.run(["git", "ls-files"], capture_output=True, text=True)
+    return result.stdout.splitlines()
+
+
+def untrack_file(file_path: str) -> bool:
+    """Remove a file from Git tracking without deleting it locally."""
+    # -r is for recursive (if it's a directory), --cached keeps the local file
+    return run_git_command(["git", "rm", "-r", "--cached", file_path])
