@@ -14,12 +14,14 @@ from giddy.git import (
     stash_pop,
     stash_push,
     switch_to_branch,
+    undo_last_commit,
 )
 from giddy.ui import (
     ask_branch_to_switch,
     ask_commit_details,
     ask_files_to_stage,
     ask_stash_preference,
+    ask_undo_confirmation,
     show_error,
     show_info,
     show_pr_link,
@@ -225,3 +227,20 @@ def sync_workflow() -> None:
         show_success(f"Successfully cleaned {cleaned_count} branch(es)!")
 
     show_success("Your repository is pristine. You are ready for a new 'giddy start'!")
+
+
+def undo_workflow() -> None:
+    """Workflow for 'giddy undo'"""
+    show_step("Preparing to undo the last commit...", icon="⏪")
+
+    if not ask_undo_confirmation():
+        show_info("Undo cancelled. Your commit is safe.")
+        return
+
+    if undo_last_commit():
+        show_success("Commit undone! Your changes are back in your working tree.")
+        show_info("Run 'giddy status' to view them or 'giddy done' to commit again.")
+    else:
+        show_error(
+            "Failed to undo commit. (Is this a brand new repository with no commits?)"
+        )

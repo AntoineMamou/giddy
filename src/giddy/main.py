@@ -11,6 +11,7 @@ from giddy.workflows import (
     start_workflow,
     switch_workflow,
     sync_workflow,
+    undo_workflow,
 )
 
 
@@ -70,6 +71,9 @@ def app() -> None:
             "init", help="Generate a default .giddy.toml configuration file."
         )
         subparsers.add_parser("switch", help="Switch to a different branch.")
+        subparsers.add_parser(
+            "undo", help="Undo the last commit without losing your changes."
+        )
 
         args = parser.parse_args()
 
@@ -96,6 +100,9 @@ def app() -> None:
 
         elif args.command == "switch":
             switch_workflow()
+
+        elif args.command == "undo":
+            undo_workflow()
 
     except KeyboardInterrupt:
         # Gracefully handle Ctrl+C
