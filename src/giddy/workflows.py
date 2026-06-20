@@ -202,7 +202,7 @@ def sync_workflow() -> None:
         show_error("Impossible to come back to the main branch.")
         return
 
-    show_step("Updating and syncing from remote...", icon="⬇️")
+    show_step(" Updating and syncing from remote...", icon="⬇️")
     fetch_and_prune()
 
     if not pull_changes():
