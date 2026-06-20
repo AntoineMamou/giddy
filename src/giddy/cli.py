@@ -152,7 +152,8 @@ def ask_files_to_stage() -> list[str]:
 def ask_branch_to_switch(branches: list[str], current_branch: str) -> str:
     """Prompt the user to fuzzy-search and select a branch."""
 
-    # Optional: Remove the current branch from the list so they don't switch to where they already are
+    # Optional: Remove the current branch from the list
+    # so they don't switch to where they already are
     available_branches = [b for b in branches if b != current_branch]
 
     if not available_branches:

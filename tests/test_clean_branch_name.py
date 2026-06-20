@@ -1,6 +1,6 @@
 import pytest
 
-from giddy.git import clean_branch_name
+from giddy.utils import clean_branch_name
 
 
 @pytest.mark.parametrize(
