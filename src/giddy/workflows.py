@@ -19,7 +19,9 @@ from giddy.git import (
     untrack_file,
 )
 from giddy.ui import (
+    ask_branch_name,
     ask_branch_to_switch,
+    ask_branch_type,
     ask_commit_details,
     ask_file_to_untrack,
     ask_files_to_stage,
@@ -113,12 +115,17 @@ def switch_workflow() -> None:
         show_error("Failed to switch branch. Please check for conflicts.")
 
 
-def start_workflow(feature_name: str) -> None:
+def start_workflow() -> None:
     """Workflow for 'giddy start'"""
-    branch_name = clean_branch_name(feature_name)
+
+    branch_type = ask_branch_type()
+    raw_name = ask_branch_name()
+
+    branch_name = clean_branch_name(branch_type, raw_name)
+
     if not branch_name:
         show_error(
-            "The feature name is invalid. Please provide a name with letters or numbers."
+            "The branch name is invalid. Please provide a name with letters or numbers."
         )
         return
 

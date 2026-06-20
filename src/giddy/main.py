@@ -53,10 +53,7 @@ def app() -> None:
         )
         subparsers = parser.add_subparsers(dest="command", required=True)
 
-        parser_start = subparsers.add_parser(
-            "start", help="Create and checkout a new feature branch."
-        )
-        parser_start.add_argument("name", type=str, help="Name of the feature.")
+        subparsers.add_parser("start", help="Create and checkout a new feature branch.")
 
         subparsers.add_parser(
             "done", help="Create a commit and push changes to remote."
@@ -86,7 +83,7 @@ def app() -> None:
 
         # Dispatch to the right workflow!
         if args.command == "start":
-            start_workflow(args.name)
+            start_workflow()
 
         elif args.command == "done":
             commit_workflow()

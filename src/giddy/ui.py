@@ -218,3 +218,30 @@ def ask_gitignore_append_confirmation(file_path: str) -> bool:
         message=f"Would you like Giddy to automatically add '{file_path}' to your .gitignore?",
         default=True,
     ).execute()
+
+
+def ask_branch_type() -> str:
+    """Interactively prompt for the branch type."""
+    branch_type_full = inquirer.select(
+        message="What type of branch are you starting?",
+        choices=[
+            "feat     ✨ (New feature)",
+            "fix      🐛 (Bug fix)",
+            "refactor 🔨 (Code improvement)",
+            "docs     📚 (Documentation)",
+            "test     🧪 (Add/Update tests)",
+            "chore    🧹 (Dependencies, configuration)",
+        ],
+        pointer="👉",
+    ).execute()
+
+    # take only the first word (ex: "fix" instead of "fix 🐛 (Bug fix)")
+    return branch_type_full.split()[0]
+
+
+def ask_branch_name() -> str:
+    """Interactively prompt for the branch name."""
+    return inquirer.text(
+        message="What is the name of your branch?",
+        validate=EmptyInputValidator("A branch name is required!"),
+    ).execute()
