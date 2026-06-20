@@ -8,6 +8,7 @@ from giddy.git import (
     get_merged_branches,
     get_modified_files,
     get_remote_repo_info,
+    get_tracked_files,
     pull_changes,
     push_head,
     stage_files,
@@ -15,11 +16,14 @@ from giddy.git import (
     stash_push,
     switch_to_branch,
     undo_last_commit,
+    untrack_file,
 )
 from giddy.ui import (
     ask_branch_to_switch,
     ask_commit_details,
+    ask_file_to_untrack,
     ask_files_to_stage,
+    ask_gitignore_append_confirmation,
     ask_stash_preference,
     ask_undo_confirmation,
     show_error,
@@ -31,7 +35,7 @@ from giddy.ui import (
 )
 
 # Nous créerons ces deux petites fonctions dans utils.py juste après !
-from giddy.utils import clean_branch_name, load_config
+from giddy.utils import append_to_gitignore, clean_branch_name, load_config
 
 # -------------------------------------------------------------------
 # SHARED SUB-WORKFLOWS (Stash management)
@@ -244,3 +248,36 @@ def undo_workflow() -> None:
         show_error(
             "Failed to undo commit. (Is this a brand new repository with no commits?)"
         )
+
+
+def untrack_workflow() -> None:
+    """Workflow for 'giddy untrack'"""
+    tracked_files = get_tracked_files()
+
+    show_step("Selecting a file to untrack...", icon="🙈")
+    file_to_untrack = ask_file_to_untrack(tracked_files)
+
+    if not file_to_untrack:
+        return
+
+    show_step(f"Asking Git to forget '{file_to_untrack}'...", icon="🧹")
+
+    if untrack_file(file_to_untrack):
+        show_success(f"Successfully untracked {file_to_untrack}!")
+        show_info(
+            "The file is still safely on your computer, but Git will ignore it from now on."
+        )
+
+        if ask_gitignore_append_confirmation(file_to_untrack):
+            append_to_gitignore(file_to_untrack)
+            show_success(f"Added '{file_to_untrack}' to .gitignore!")
+        else:
+            show_warning(
+                "Remember to add it to your .gitignore manually to prevent committing it again!"
+            )
+
+        show_info(
+            "👉 Run 'giddy done' to commit this deletion from the remote repository."
+        )
+    else:
+        show_error("Failed to untrack the file.")

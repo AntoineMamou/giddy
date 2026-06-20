@@ -12,6 +12,7 @@ from giddy.workflows import (
     switch_workflow,
     sync_workflow,
     undo_workflow,
+    untrack_workflow,
 )
 
 
@@ -74,6 +75,9 @@ def app() -> None:
         subparsers.add_parser(
             "undo", help="Undo the last commit without losing your changes."
         )
+        subparsers.add_parser(
+            "untrack", help="Stop tracking a file in Git without deleting it locally."
+        )
 
         args = parser.parse_args()
 
@@ -103,6 +107,8 @@ def app() -> None:
 
         elif args.command == "undo":
             undo_workflow()
+        elif args.command == "untrack":
+            untrack_workflow()
 
     except KeyboardInterrupt:
         # Gracefully handle Ctrl+C

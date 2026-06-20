@@ -54,3 +54,19 @@ scopes = ["api", "ui", "cli", "docs", "tests", "core"]
     with open(config_path, "w") as f:
         f.write(default_config)
     print("\n✅ Created default .giddy.toml configuration file!")
+
+
+def append_to_gitignore(file_path: str) -> None:
+    """Append a file or folder path to the .gitignore file safely."""
+    gitignore_path = Path(".gitignore")
+
+    # if the file already exists, check if it's not already there to avoid duplicates
+    if gitignore_path.is_file():
+        with open(gitignore_path, "r", encoding="utf-8") as f:
+            existing_lines = [line.strip() for line in f.readlines()]
+        if file_path in existing_lines:
+            return  # Already present, nothing to do!
+
+    # add it properly to the end of the file
+    with open(gitignore_path, "a", encoding="utf-8") as f:
+        f.write(f"\n{file_path}\n")

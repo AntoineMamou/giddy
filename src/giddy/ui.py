@@ -197,3 +197,24 @@ def ask_undo_confirmation() -> bool:
         message="Are you sure you want to undo your last commit? (Your files will be kept)",
         default=False,
     ).execute()
+
+
+def ask_file_to_untrack(tracked_files: list[str]) -> str:
+    """Prompt the user to fuzzy-search a tracked file to untrack."""
+    if not tracked_files:
+        show_warning("No tracked files found in this repository.")
+        return ""
+
+    return inquirer.fuzzy(
+        message="Which file or folder do you want Git to forget? (It won't be deleted from your PC)",
+        choices=tracked_files,
+        instruction="(Start typing to search, Enter to select)",
+    ).execute()
+
+
+def ask_gitignore_append_confirmation(file_path: str) -> bool:
+    """Prompt the user to confirm if they want to add the file to .gitignore."""
+    return inquirer.confirm(
+        message=f"Would you like Giddy to automatically add '{file_path}' to your .gitignore?",
+        default=True,
+    ).execute()
