@@ -7,11 +7,11 @@ except ImportError:
     pass
 
 
-def clean_branch_name(feature_name: str) -> str:
+def clean_branch_name(branch_type: str, raw_name: str) -> str:
     """
     Clean the feature name to create a valid Git branch name.
     """
-    clean_name = feature_name.strip().lower().replace(" ", "-").replace("_", "-")
+    clean_name = raw_name.strip().lower().replace(" ", "-").replace("_", "-")
     clean_name = re.sub(r"[^a-z0-9-]", "", clean_name)  # Remove special characters
     clean_name = re.sub(r"-+", "-", clean_name)  # Prevent multiple consecutive dashes
     clean_name = clean_name.strip("-")  # Remove leading/trailing dashes
@@ -19,7 +19,7 @@ def clean_branch_name(feature_name: str) -> str:
     if not clean_name:
         return ""
 
-    return f"feat/{clean_name}"
+    return f"{branch_type}/{clean_name}"
 
 
 def load_config() -> dict:
