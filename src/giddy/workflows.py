@@ -167,7 +167,6 @@ def commit_workflow() -> None:
         show_success("Working tree is clean. Nothing to commit!")
         return
 
-    show_step("Giddy up! Let's prepare this commit.", icon="🐎")
     files_to_stage = ask_files_to_stage(files)
 
     if not files_to_stage:

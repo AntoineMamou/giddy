@@ -111,12 +111,12 @@ def ask_commit_details(defined_scopes: list[str]) -> str:
     commit_type_full = inquirer.select(
         message="What type of change did you make?",
         choices=[
-            "feat     ✨ (New feature)",
-            "fix      🐛 (Bug fix)",
-            "refactor 🔨 (Code improvement)",
-            "docs     📚 (Documentation)",
-            "test     🧪 (Add/Update tests)",
-            "chore    🧹 (Dependencies, configuration)",
+            "feat     (New feature)",
+            "fix      (Bug fix)",
+            "refactor (Code improvement)",
+            "docs     (Documentation)",
+            "test     (Add/Update tests)",
+            "chore    (Dependencies, configuration)",
         ],
         pointer="👉",
     ).execute()
@@ -183,9 +183,9 @@ def ask_stash_preference(current_branch: str, file_count: int) -> str:
     return inquirer.select(
         message="What would you like to do with these changes?",
         choices=[
-            "🧳 Take them with me to the new branch",
-            "🧊 Leave them here (stash) and switch with clean state",
-            "❌ Cancel and stay on current branch",
+            "Take them with me to the new branch",
+            "Leave them here (stash) and switch with clean state",
+            "Cancel and stay on current branch",
         ],
         pointer="👉",
     ).execute()
@@ -225,17 +225,17 @@ def ask_branch_type() -> str:
     branch_type_full = inquirer.select(
         message="What type of branch are you starting?",
         choices=[
-            "feat     ✨ (New feature)",
-            "fix      🐛 (Bug fix)",
-            "refactor 🔨 (Code improvement)",
-            "docs     📚 (Documentation)",
-            "test     🧪 (Add/Update tests)",
-            "chore    🧹 (Dependencies, configuration)",
+            "feat     (New feature)",
+            "fix      (Bug fix)",
+            "refactor (Code improvement)",
+            "docs     (Documentation)",
+            "test     (Add/Update tests)",
+            "chore    (Dependencies, configuration)",
         ],
         pointer="👉",
     ).execute()
 
-    # take only the first word (ex: "fix" instead of "fix 🐛 (Bug fix)")
+    # take only the first word (ex: "fix" instead of "fix (Bug fix)")
     return branch_type_full.split()[0]
 
 
