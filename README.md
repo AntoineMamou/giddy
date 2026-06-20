@@ -2,7 +2,7 @@
 
 An interactive Git assistant that simplifies your workflow and helps you follow best practices.
 
-[![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
+[![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)]([https://www.python.org/downloads/](https://www.python.org/downloads/))
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 ## Overview
@@ -39,19 +39,19 @@ pipx install -e .
 giddy init
 ```
 
-Generates a .giddy.toml file to customize your base branch and commit scopes.
+Generates a `.giddy.toml` file to customize your base branch and commit scopes.
 
 ### 2. Start a New Feature
 
 ```bash
-giddy start "add user authentication"
+giddy start
 ```
 
-Giddy will:
-- Switch to the `main` branch
+Giddy will interactively ask for the branch type and name, then:
+- Switch to the base branch (e.g., `main`)
 - Pull the latest changes from remote
-- Create a new feature branch: `feat/add-user-authentication`
-- Optionally carry or stash your current changes
+- Create a new formatted branch: `feat/add-user-authentication`
+- Optionally carry or stash your current uncommitted changes
 
 ### 3. Check Status
 
@@ -74,7 +74,7 @@ Giddy will:
 - Show your modified files and let you select which to stage
 - Guide you through creating a conventional commit message
 - Push changes to your remote repository
-- Show you the Pull Request link if needed
+- Show you the Pull Request / Merge Request link if needed (GitHub & GitLab supported!)
 
 ### 5. Sync with Main
 
@@ -83,42 +83,52 @@ giddy sync
 ```
 
 Giddy will:
-- Switch back to `main`
+- Switch back to the base branch
 - Pull latest changes from remote
 - Clean up deleted remote branches
 
 ## Commands
 
-### giddy init
+### `giddy init`
 
-Generate a default .giddy.toml configuration file in your current directory.
+Generate a default `.giddy.toml` configuration file in your current directory.
 
 **Features:**
-
 - Safely checks if a configuration already exists to prevent overwriting
 - Generates a commented template
-- Allows you to define your custom base_branch (e.g., develop, master)
-- Allows you to define predefined scopes (transforms the text input into a dropdown menu during giddy done)
+- Allows you to define your custom `base_branch` (e.g., `develop`, `master`)
+- Allows you to define predefined `scopes` (transforms the text input into a dropdown menu during `giddy done`)
 
 ---
 
-### `giddy start <feature-name>`
+### `giddy start`
 
-Create and checkout a new feature branch.
+Start an interactive wizard to create and checkout a new branch.
 
 **Features:**
-- Automatic branch naming: `feat/feature-name`
+- Interactive prompts for branch type (`feat`, `fix`, `docs`, etc.) and name
+- Automatic branch naming: `type/clean-feature-name`
 - Interactive stash handling if you have uncommitted changes
-- Pulls latest code from remote before creating branch
-
-**Options:**
-- `--name`: Feature name (supports spaces and special characters)
+- Pulls latest code from remote before creating the branch
 
 **Example:**
 ```bash
-giddy start "implement dark mode"
+giddy start
+# Prompts: What type of branch? -> feat
+# Prompts: What is the name? -> implement dark mode
 # Creates: feat/implement-dark-mode
 ```
+
+---
+
+### `giddy switch`
+
+Switch to a different branch interactively.
+
+**Features:**
+- Fuzzy search to quickly find the branch you need
+- Branches are sorted by recent commit date
+- Safety guard: handles uncommitted changes before switching
 
 ---
 
@@ -137,17 +147,54 @@ Create a commit and push changes to remote.
 - `fix` 🐛 - Bug fix
 - `refactor` 🔨 - Code improvement
 - `docs` 📚 - Documentation
+- `test` 🧪 - Add/Update tests
 - `chore` 🧹 - Dependencies, configuration
 
 **Example:**
 ```bash
 giddy done
 # Follow the interactive prompts:
-# 1. Select commit type: feat
-# 2. Add scope (optional): auth
-# 3. Describe change: add password reset functionality
-# 4. Commit and push!
+# 1. Select files with Spacebar
+# 2. Select commit type: feat
+# 3. Add scope (optional): auth
+# 4. Describe change: add password reset functionality
+# 5. Commit and push!
 ```
+
+---
+
+### `giddy amend`
+
+Quickly fix your last commit by adding forgotten files.
+
+**Features:**
+- Perfect for the classic "oops, I forgot to save this file before committing"
+- Interactively select forgotten files to stage
+- Amends the last commit silently without changing its message
+- Safe force-push (`--force-with-lease`)
+- Safety guard: blocked on main/base branch to protect project history
+
+---
+
+### `giddy undo`
+
+Undo the last commit without losing your changes.
+
+**Features:**
+- Uses `git reset --soft HEAD~1` safely
+- Your code is kept exactly as it is in your working directory
+- Perfect for reverting a `giddy done` to change the commit message
+
+---
+
+### `giddy untrack`
+
+Stop tracking a file in Git without deleting it locally.
+
+**Features:**
+- Fuzzy search through all tracked files
+- Safely removes the file from Git's index (`--cached`)
+- Optionally appends the file automatically to your `.gitignore`
 
 ---
 
@@ -174,10 +221,10 @@ giddy status
 
 ### `giddy sync`
 
-Switch back to main, pull updates, and clean up dead branches.
+Switch back to the base branch, pull updates, and clean up dead branches.
 
 **Features:**
-- Safe switch to main branch
+- Safe switch to base branch
 - Pulls latest changes from remote
 - Removes local branches that no longer exist on remote
 - Ideal after merging pull requests
@@ -187,8 +234,6 @@ Switch back to main, pull updates, and clean up dead branches.
 giddy sync
 # Clean up after your PR is merged
 ```
-
----
 
 ## Conventional Commits Format
 
@@ -222,7 +267,7 @@ chore(deps): upgrade Flask to 2.0.0
 
 ```bash
 # 1. Start new feature
-giddy start "add email notifications"
+giddy start
 # You're now on: feat/add-email-notifications
 
 # 2. Make your changes
@@ -235,7 +280,7 @@ giddy status
 giddy done
 # Select files → Choose type → Add description → Push!
 
-# 5. Open a pull request on GitHub
+# 5. Open a pull/merge request on GitHub/GitLab
 
 # 6. After PR is merged, sync back to main
 giddy sync
@@ -244,21 +289,21 @@ giddy sync
 ## Tips & Tricks
 
 ### 1. Branch Naming
-Giddy automatically converts your feature name to a valid Git branch:
+Giddy automatically converts your branch type and feature name to a valid Git branch:
 ```bash
-giddy start "Add User Login"     # → feat/add-user-login
-giddy start "fix bug_in API"     # → feat/fix-bug-in-api
-giddy start "REFACTOR  helpers"  # → feat/refactor-helpers
+# User inputs "feat" and "Add User Login" -> feat/add-user-login
+# User inputs "fix" and "bug_in API"      -> fix/bug-in-api
+# User inputs "docs" and "REFACTOR  docs" -> docs/refactor-docs
 ```
 
 ### 2. Stashing Changes
-When starting a new branch with uncommitted changes:
-- **Carry Changes**: Moves modifications to the new branch
-- **Stash**: Safely stores them, retrieve later with `git stash pop`
+When starting or switching a branch with uncommitted changes:
+- **Take them**: Moves modifications to the new branch
+- **Leave them (Stash)**: Safely stores them, retrieve later with `git stash pop`
 - **Cancel**: Stay on current branch
 
 ### 3. File Selection
-When running `giddy done`, select specific files instead of staging everything:
+When running `giddy done` or `giddy amend`, select specific files instead of staging everything:
 - Choose files you want to commit
 - Leave others for the next commit
 - Keeps commits focused and organized
@@ -275,9 +320,10 @@ giddy done  # Select files C, D
 ## Troubleshooting
 
 ### "main branch not found"
-Make sure your repository has a `main` branch. If using `master`:
+Make sure your repository has a `main` branch. If using `master`, initialize Giddy to set your custom base branch:
 ```bash
-git branch -m master main
+giddy init
+# Then edit .giddy.toml and set base_branch = "master"
 ```
 
 ### Changes not staged after stash pop
@@ -287,10 +333,10 @@ giddy status
 ```
 
 ### Accidental commit on wrong branch?
-Reset and try again:
+Reset and try again using the built-in undo tool:
 ```bash
-git reset --soft HEAD~1
-giddy start "correct-feature-name"
+giddy undo
+giddy switch
 giddy done
 ```
 
@@ -309,7 +355,6 @@ source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 
 # Install in development mode
 pip install -e .
-
 ```
 
 ### Project Structure
@@ -318,10 +363,11 @@ pip install -e .
 giddy/
 ├── src/giddy/
 │   ├── __init__.py          # Package metadata
-│   ├── main.py              # CLI entry point
-│   ├── cli.py               # User prompts and UI
-|   ├── config.py            # TOML configuration parser
-│   └── git.py               # Git command wrappers
+│   ├── main.py              # CLI entry point & router
+│   ├── workflows.py         # Main command logic and workflows
+│   ├── ui.py                # InquirerPy prompts and Rich UI
+│   ├── git.py               # Pure Git command wrappers
+│   └── utils.py             # Helper functions and config loading
 ├── pyproject.toml           # Project configuration
 └── README.md                # This file
 ```
@@ -346,9 +392,9 @@ ruff format src/
 Contributions are welcome! Here's how to help:
 
 1. **Fork** the repository
-2. **Create** a feature branch: `git checkout -b feat/your-feature`
+2. **Create** a feature branch: `giddy start`
 3. **Make** your changes and add tests if possible
-4. **Commit** using `giddy done` (eating our own dog food!)
+4. **Commit** using `giddy done`
 5. **Push** to your fork
 6. **Open** a pull request
 
@@ -357,14 +403,14 @@ Contributions are welcome! Here's how to help:
 - Follow PEP 8 style guide
 - Write clear, descriptive commit messages
 - Add docstrings to functions
-- Test your changes locally
+- Test your changes locally (`pytest tests/`)
 
 ## Roadmap
 
 - [ ] Commit templates
-- [ ] Integration with GitHub/GitLab APIs
-- [ ] Undo/rollback functionality
-- [ ] Branch switching helpers
+- [x] Integration with GitHub/GitLab APIs
+- [x] Undo/rollback functionality
+- [x] Branch switching helpers
 - [ ] Automated changelog generation
 
 ## License
@@ -374,6 +420,3 @@ This project is licensed under the MIT License - see [LICENSE](LICENSE) file for
 ## Author
 
 Created by **Antoine** ([GitHub](https://github.com/AntoineMamou))
-
----
-
