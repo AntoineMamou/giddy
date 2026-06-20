@@ -189,3 +189,11 @@ def ask_stash_preference(current_branch: str, file_count: int) -> str:
         ],
         pointer="👉",
     ).execute()
+
+
+def ask_undo_confirmation() -> bool:
+    """Prompt the user to confirm the undo action."""
+    return inquirer.confirm(
+        message="Are you sure you want to undo your last commit? (Your files will be kept)",
+        default=False,
+    ).execute()

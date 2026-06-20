@@ -7,7 +7,6 @@ def run_git_command(command: list[str]) -> bool:
         subprocess.run(command, check=True, capture_output=True)
         return True
     except subprocess.CalledProcessError:
-        # 🧹 REFRACTOR: No more prints here! The caller handles the error.
         return False
 
 
@@ -85,7 +84,7 @@ def get_remote_repo_info() -> tuple[str, str]:
 
 
 # -------------------------------------------------------------------
-# 🧩 NEW EXTRACTED ACTIONS (Previously mixed in your commands)
+# ACTIONS
 # -------------------------------------------------------------------
 
 
@@ -149,3 +148,8 @@ def delete_local_branch(branch_name: str) -> bool:
     """Delete a local branch."""
     # Using lowercase -d is safe: Git will refuse to delete if it's not merged!
     return run_git_command(["git", "branch", "-d", branch_name])
+
+
+def undo_last_commit() -> bool:
+    """Undo the last commit but keep files in the working directory."""
+    return run_git_command(["git", "reset", "--soft", "HEAD~1"])
