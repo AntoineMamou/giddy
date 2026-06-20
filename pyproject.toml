@@ -3,7 +3,7 @@ requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "giddy"
+name = "giddy-cli"
 version = "0.1.0"
 description = "Interactive Git assistant that helps you follow best practices and simplify your workflow."
 requires-python = ">=3.11"

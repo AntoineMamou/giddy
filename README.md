@@ -23,12 +23,10 @@ Giddy is a command-line tool that makes Git workflows smoother and more intuitiv
 - Python 3.11 or higher
 - Git 2.0 or higher
 
-### To use giddy globally
+### Install globally
 
 ```bash
-git clone https://github.com/AntoineMamou/giddy/
-cd giddy
-pipx install -e .
+pipx install giddy-cli
 ```
 
 ## Quick Start
