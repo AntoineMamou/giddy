@@ -70,3 +70,11 @@ def append_to_gitignore(file_path: str) -> None:
     # add it properly to the end of the file
     with open(gitignore_path, "a", encoding="utf-8") as f:
         f.write(f"\n{file_path}\n")
+
+
+def parse_version(tag: str) -> tuple[int, int, int]:
+    """Parse a tag string (like 'v1.2.3' or '1.2.3') into major, minor, patch."""
+    match = re.match(r"^v?(\d+)\.(\d+)\.(\d+)$", tag)
+    if match:
+        return int(match.group(1)), int(match.group(2)), int(match.group(3))
+    return 0, 0, 0  # Fallback if the last tag was formatted badly

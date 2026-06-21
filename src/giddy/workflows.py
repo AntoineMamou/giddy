@@ -1,10 +1,13 @@
+from giddy.cli import ask_version_bump
 from giddy.git import (
     commit_amend,
     commit_changes,
     create_and_checkout_branch,
+    create_annotated_tag,
     delete_local_branch,
     fetch_and_prune,
     get_current_branch,
+    get_latest_tag,
     get_local_branches,
     get_merged_branches,
     get_modified_files,
@@ -13,6 +16,7 @@ from giddy.git import (
     pull_changes,
     push_force,
     push_head,
+    push_tag,
     stage_files,
     stash_pop,
     stash_push,
@@ -28,7 +32,9 @@ from giddy.ui import (
     ask_file_to_untrack,
     ask_files_to_stage,
     ask_gitignore_append_confirmation,
+    ask_push_tag_confirmation,
     ask_stash_preference,
+    ask_tag_message,
     ask_undo_confirmation,
     show_error,
     show_info,
@@ -330,4 +336,59 @@ def amend_workflow() -> None:
     else:
         show_error(
             "Failed to force-push. Someone else might have updated the branch on the remote."
+        )
+
+
+def tag_workflow() -> None:
+    """Workflow to create and push a Semantic Versioning tag."""
+
+    # 1. Le Garde-fou : Vérifier que le répertoire est propre
+    if get_modified_files():
+        show_warning(
+            "Your working directory is not clean. Please commit or stash your changes before creating a release tag."
+        )
+        return
+
+    # 2. Le Garde-fou (Optionnel mais recommandé) : Vérifier la branche
+    config = load_config()
+    base_branch = config.get("base_branch", "main")
+    current_branch = get_current_branch()
+
+    if current_branch != base_branch:
+        show_warning(
+            f"You are currently on '{current_branch}', not your base branch ('{base_branch}')."
+        )
+        show_info(
+            "Releases are usually tagged on the base branch. Be absolutely sure this is what you want!"
+        )
+        print("")  # Petit espace visuel
+
+    # 3. Récupérer le dernier tag connu
+    latest_tag = get_latest_tag()
+
+    # 4. L'interface InquirerPy : Calculer et demander la nouvelle version
+    new_version = ask_version_bump(latest_tag)
+
+    # 5. Demander la description de la release
+    message = ask_tag_message(new_version)
+
+    # 6. Création locale
+    show_step(f"Creating annotated tag {new_version}...", icon="🏷️")
+    if not create_annotated_tag(new_version, message):
+        show_error(f"Failed to create tag {new_version}. It might already exist.")
+        return
+    show_success(f"Tag {new_version} created locally!")
+
+    # 7. La touche finale : L'envoi sur le serveur
+    if ask_push_tag_confirmation(new_version):
+        show_step(f"Pushing {new_version} to remote...", icon="🚀")
+        if push_tag(new_version):
+            show_success(f"Tag {new_version} successfully pushed to GitHub/GitLab!")
+        else:
+            show_error(
+                f"Failed to push tag {new_version}. Check your connection or permissions."
+            )
+    else:
+        show_info(
+            f"Tag {new_version} remains local. You can push it later using 'git push origin {new_version}'."
         )

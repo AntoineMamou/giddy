@@ -6,6 +6,7 @@ from rich.text import Text
 
 from giddy.config import load_config
 from giddy.git import get_current_branch, get_modified_files
+from giddy.utils import parse_version
 
 
 def ask_commit_details() -> str:
@@ -167,3 +168,43 @@ def ask_branch_to_switch(branches: list[str], current_branch: str) -> str:
     ).execute()
 
     return branch
+
+
+def ask_version_bump(latest_tag: str | None) -> str:
+    """Prompts the user to select the next semantic version."""
+    if not latest_tag:
+        choices = [
+            {"name": "🚀 First Release (v1.0.0)", "value": "v1.0.0"},
+            {"name": "🌱 Beta Release (v0.1.0)", "value": "v0.1.0"},
+            {"name": "✏️ Custom version", "value": "custom"},
+        ]
+        message = "No existing tags found. What version would you like to create?"
+    else:
+        major, minor, patch = parse_version(latest_tag)
+
+        major_v = f"v{major + 1}.0.0"
+        minor_v = f"v{major}.{minor + 1}.0"
+        patch_v = f"v{major}.{minor}.{patch + 1}"
+
+        choices = [
+            {"name": f"Major ({major_v}) - Breaking changes", "value": major_v},
+            {"name": f"Minor ({minor_v}) - New features", "value": minor_v},
+            {"name": f"Patch ({patch_v}) - Bug fixes", "value": patch_v},
+            {"name": "Custom version", "value": "custom"},
+        ]
+
+        message = f"Latest tag is {latest_tag}. How would you like to bump the version?"
+
+    choice = inquirer.select(
+        message=message,
+        choices=choices,
+        pointer="👉",
+    ).execute()
+
+    if choice == "custom":
+        return inquirer.text(
+            message="Enter your custom version (e.g., v2.0.0-beta):",
+            validate=EmptyInputValidator("Version cannot be empty!"),
+        ).execute()
+
+    return choice

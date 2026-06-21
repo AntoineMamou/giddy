@@ -49,6 +49,26 @@ def get_local_branches() -> list[str]:
         return []
 
 
+def get_latest_tag() -> str | None:
+    """
+    Retrieves the latest Git tag in the repository.
+
+    Returns:
+        The tag name as a string (e.g., 'v1.2.3'), or None if no tags exist.
+    """
+    try:
+        # git describe --tags --abbrev=0 renvoie le tag le plus récent
+        result = subprocess.run(
+            ["git", "describe", "--tags", "--abbrev=0"],
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+        return result.stdout.strip()
+    except subprocess.CalledProcessError:
+        return None
+
+
 def switch_to_branch(branch_name: str) -> bool:
     """Switch to an existing branch."""
     return run_git_command(["git", "checkout", branch_name])
@@ -175,3 +195,13 @@ def commit_amend() -> bool:
 def push_force() -> bool:
     """Force push safely using --force-with-lease."""
     return run_git_command(["git", "push", "--force-with-lease", "origin", "HEAD"])
+
+
+def create_annotated_tag(name: str, message: str) -> bool:
+    """Creates an annotated Git tag."""
+    return run_git_command(["git", "tag", "-a", name, "-m", message])
+
+
+def push_tag(name: str) -> bool:
+    """Pushes a specific Git tag to the remote repository."""
+    return run_git_command(["git", "push", "origin", name])
