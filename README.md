@@ -9,14 +9,6 @@ An interactive Git assistant that simplifies your workflow and helps you follow 
 
 Giddy is a command-line tool that makes Git workflows smoother and more intuitive. Whether you're starting a new feature, committing changes, or syncing with your team, Giddy guides you through the process with interactive prompts and clear feedback.
 
-### Why Giddy?
-
-- **Enforce Best Practices**: Follow conventional commits automatically
-- **Interactive Workflow**: Intuitive prompts guide you through each step
-- **Smart Defaults**: Handles branch naming, stashing, and cleanup intelligently
-- **Minimal Dependencies**: Lightweight and fast
-- **Beautiful Output**: Rich, colorful terminal UI for better readability
-
 ## Installation
 
 ### Requirements
