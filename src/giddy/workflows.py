@@ -37,8 +37,6 @@ from giddy.ui import (
     show_success,
     show_warning,
 )
-
-# Nous créerons ces deux petites fonctions dans utils.py juste après !
 from giddy.utils import append_to_gitignore, clean_branch_name, load_config
 
 # -------------------------------------------------------------------
