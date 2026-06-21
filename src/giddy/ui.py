@@ -245,3 +245,19 @@ def ask_branch_name() -> str:
         message="What is the name of your branch?",
         validate=EmptyInputValidator("A branch name is required!"),
     ).execute()
+
+
+def ask_tag_message(version: str) -> str:
+    """Prompts for the annotated tag message."""
+    return inquirer.text(
+        message=f"Enter a release message for {version}:",
+        validate=EmptyInputValidator("A message is required for annotated tags!"),
+    ).execute()
+
+
+def ask_push_tag_confirmation(version: str) -> bool:
+    """Prompts the user to confirm pushing the tag to the remote repository."""
+    return inquirer.confirm(
+        message=f"Do you want to push {version} to origin now?",
+        default=True,
+    ).execute()

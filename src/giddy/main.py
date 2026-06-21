@@ -11,6 +11,7 @@ from giddy.workflows import (
     start_workflow,
     switch_workflow,
     sync_workflow,
+    tag_workflow,
     undo_workflow,
     untrack_workflow,
 )
@@ -78,6 +79,7 @@ def app() -> None:
         subparsers.add_parser(
             "amend", help="Quickly add forgotten files to your last commit."
         )
+        subparsers.add_parser("tag", help="Create and push a Semantic Versioning tag.")
 
         args = parser.parse_args()
 
@@ -113,6 +115,9 @@ def app() -> None:
 
         elif args.command == "amend":
             amend_workflow()
+
+        elif args.command == "tag":
+            tag_workflow()
 
     except KeyboardInterrupt:
         # Gracefully handle Ctrl+C
